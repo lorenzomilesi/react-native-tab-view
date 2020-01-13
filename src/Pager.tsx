@@ -730,6 +730,7 @@ export default class Pager<T extends Route> extends React.Component<
       children,
       removeClippedSubviews,
       gestureHandlerProps,
+      tabHeight,
     } = this.props;
 
     const translateX = this.getTranslateX(
@@ -765,6 +766,7 @@ export default class Pager<T extends Route> extends React.Component<
                     transform: [{ translateX }] as any,
                   }
                 : null,
+              tabHeight && { height: tabHeight },
             ]}
           >
             <PagerContext.Provider value={this.providerVal}>

@@ -5,6 +5,8 @@ import {
   StyleProp,
   ViewStyle,
   LayoutChangeEvent,
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
@@ -20,6 +22,10 @@ import {
 import Pager, { Props as ChildProps } from './Pager';
 
 type Props<T extends Route> = PagerCommonProps & {
+  onScrollViewRef: (ref) => void,
+  onScroll: (e) => void,
+  onRefresh?: (e) => void,
+  refreshing?: boolean,
   position?: Animated.Value<number>;
   onIndexChange: (index: number) => void;
   navigationState: NavigationState<T>;
@@ -34,6 +40,10 @@ type Props<T extends Route> = PagerCommonProps & {
       navigationState: NavigationState<T>;
     }
   ) => React.ReactNode;
+  isLoading?: boolean,
+  renderLoaderComponent?: (props: *) => React.Node,
+  isError?: boolean,
+  renderErrorComponent?: (props: *) => React.Node,
   tabBarPosition: 'top' | 'bottom';
   initialLayout?: { width?: number; height?: number };
   lazy: boolean;
@@ -43,6 +53,7 @@ type Props<T extends Route> = PagerCommonProps & {
   style?: StyleProp<ViewStyle>;
   gestureHandlerProps: React.ComponentProps<typeof PanGestureHandler>;
   renderPager: (props: ChildProps<T>) => React.ReactNode;
+  renderTopContent?: (props: *) => React.Node,
 };
 
 type State = {
@@ -121,6 +132,17 @@ export default class TabView<T extends Route> extends React.Component<
       gestureHandlerProps,
       springVelocityScale,
       renderPager,
+      onScrollViewRef,
+      onScroll,
+      onRefresh,
+      refreshing,
+      scrollEnabled,
+      renderTopContent,
+      renderLoaderComponent,
+      renderErrorComponent,
+      isLoading,
+      isError,
+      onEndReached,
     } = this.props;
     const { layout } = this.state;
 
@@ -155,8 +177,36 @@ export default class TabView<T extends Route> extends React.Component<
               jumpTo,
             };
 
-            return (
-              <React.Fragment>
+            return renderTopContent ? (
+              <ScrollView
+                ref={ref => {
+                  if (onScrollViewRef) {
+                    onScrollViewRef(ref)
+                  }
+                }}
+                scrollEnabled={scrollEnabled}
+                stickyHeaderIndices={[1]} 
+                collapsable={false}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={((isLoading && renderLoaderComponent) || (isError && renderErrorComponent)) && { flex: 1 }}
+                onScroll={(e) => {
+                  if (onScroll) {
+                    onScroll(e);
+                  }
+        
+                  let paddingToBottom = 10;
+                  paddingToBottom += e.nativeEvent.layoutMeasurement.height;
+                  if(e.nativeEvent.contentOffset.y >= e.nativeEvent.contentSize.height - paddingToBottom) {
+                    if (onEndReached) {
+                      onEndReached();
+                    }
+                  }
+                }}
+                scrollEventThrottle={400}
+              >
                 {positionListener ? (
                   <Animated.Code
                     exec={Animated.set(positionListener, position)}
@@ -198,7 +248,51 @@ export default class TabView<T extends Route> extends React.Component<
                     ...sceneRendererProps,
                     navigationState,
                   })}
-              </React.Fragment>
+                  </ScrollView>
+            ) : (
+              <>
+              {positionListener ? (
+                <Animated.Code
+                  exec={Animated.set(positionListener, position)}
+                />
+              ) : null}
+              {tabBarPosition === 'top' &&
+                renderTabBar({
+                  ...sceneRendererProps,
+                  navigationState,
+                })}
+              {render(
+                navigationState.routes.map((route, i) => {
+                  return (
+                    <SceneView
+                      {...sceneRendererProps}
+                      addListener={addListener}
+                      removeListener={removeListener}
+                      key={route.key}
+                      index={i}
+                      lazy={lazy}
+                      lazyPreloadDistance={lazyPreloadDistance}
+                      navigationState={navigationState}
+                      style={sceneContainerStyle}
+                    >
+                      {({ loading }) =>
+                        loading
+                          ? renderLazyPlaceholder({ route })
+                          : renderScene({
+                              ...sceneRendererProps,
+                              route,
+                            })
+                      }
+                    </SceneView>
+                  );
+                })
+              )}
+              {tabBarPosition === 'bottom' &&
+                renderTabBar({
+                  ...sceneRendererProps,
+                  navigationState,
+                })}
+            </>
             );
           },
         })}
