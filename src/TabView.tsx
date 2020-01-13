@@ -41,9 +41,9 @@ type Props<T extends Route> = PagerCommonProps & {
     }
   ) => React.ReactNode;
   isLoading?: boolean,
-  renderLoaderComponent?: (props: *) => React.Node,
+  renderLoaderComponent?: (props: any) => React.Node,
   isError?: boolean,
-  renderErrorComponent?: (props: *) => React.Node,
+  renderErrorComponent?: (props: any) => React.Node,
   tabBarPosition: 'top' | 'bottom';
   initialLayout?: { width?: number; height?: number };
   lazy: boolean;
@@ -53,7 +53,7 @@ type Props<T extends Route> = PagerCommonProps & {
   style?: StyleProp<ViewStyle>;
   gestureHandlerProps: React.ComponentProps<typeof PanGestureHandler>;
   renderPager: (props: ChildProps<T>) => React.ReactNode;
-  renderTopContent?: (props: *) => React.Node,
+  renderTopContent?: (props: any) => React.Node,
 };
 
 type State = {
