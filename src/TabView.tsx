@@ -22,9 +22,9 @@ import {
 import Pager, { Props as ChildProps } from './Pager';
 
 type Props<T extends Route> = PagerCommonProps & {
-  onScrollViewRef: (ref) => void,
-  onScroll: (e) => void,
-  onRefresh?: (e) => void,
+  onScrollViewRef: (ref: any) => void,
+  onScroll: (e: any) => void,
+  onRefresh?: (e: any) => void,
   refreshing?: boolean,
   position?: Animated.Value<number>;
   onIndexChange: (index: number) => void;
@@ -41,9 +41,9 @@ type Props<T extends Route> = PagerCommonProps & {
     }
   ) => React.ReactNode;
   isLoading?: boolean,
-  renderLoaderComponent?: (props: any) => React.Node,
+  renderLoaderComponent?: (props: any) => React.ReactNode,
   isError?: boolean,
-  renderErrorComponent?: (props: any) => React.Node,
+  renderErrorComponent?: (props: any) => React.ReactNode,
   tabBarPosition: 'top' | 'bottom';
   initialLayout?: { width?: number; height?: number };
   lazy: boolean;
@@ -53,7 +53,7 @@ type Props<T extends Route> = PagerCommonProps & {
   style?: StyleProp<ViewStyle>;
   gestureHandlerProps: React.ComponentProps<typeof PanGestureHandler>;
   renderPager: (props: ChildProps<T>) => React.ReactNode;
-  renderTopContent?: (props: any) => React.Node,
+  renderTopContent?: (props: any) => React.ReactNode,
 };
 
 type State = {
