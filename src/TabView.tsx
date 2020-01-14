@@ -186,6 +186,7 @@ export default class TabView<T extends Route> extends React.Component<
             }}
             scrollEventThrottle={400}
           >
+            {renderTopContent()}
             {renderPager({
               navigationState,
               layout,
