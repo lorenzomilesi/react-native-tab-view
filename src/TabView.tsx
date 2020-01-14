@@ -24,8 +24,10 @@ import Pager, { Props as ChildProps } from './Pager';
 type Props<T extends Route> = PagerCommonProps & {
   onScrollViewRef: (ref: any) => void,
   onScroll: (e: any) => void,
-  onRefresh?: (e: any) => void,
-  refreshing?: boolean,
+  onEndReached: (e: any) => void,
+  scrollEnabled?: boolean,
+  onRefresh?: () => void,
+  refreshing: boolean,
   position?: Animated.Value<number>;
   onIndexChange: (index: number) => void;
   navigationState: NavigationState<T>;
