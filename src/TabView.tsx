@@ -24,7 +24,7 @@ import Pager, { Props as ChildProps } from './Pager';
 type Props<T extends Route> = PagerCommonProps & {
   onScrollViewRef: (ref: any) => void,
   onScroll: (e: any) => void,
-  onEndReached: (e: any) => void,
+  onEndReached: () => void,
   scrollEnabled?: boolean,
   onRefresh?: () => void,
   refreshing: boolean,

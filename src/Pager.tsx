@@ -767,7 +767,7 @@ export default class Pager<T extends Route> extends React.Component<
                     transform: [{ translateX }] as any,
                   }
                 : null,
-              tabHeight && { height: tabHeight },
+              tabHeight ? { height: tabHeight } : null,
             ]}
           >
             <PagerContext.Provider value={this.providerVal}>
