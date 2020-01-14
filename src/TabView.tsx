@@ -6,7 +6,7 @@ import {
   ViewStyle,
   LayoutChangeEvent,
   ScrollView,
-  RefreshControl
+  RefreshControl,
 } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
@@ -22,12 +22,12 @@ import {
 import Pager, { Props as ChildProps } from './Pager';
 
 type Props<T extends Route> = PagerCommonProps & {
-  onScrollViewRef: (ref: any) => void,
-  onScroll: (e: any) => void,
-  onEndReached: () => void,
-  scrollEnabled?: boolean,
-  onRefresh?: () => void,
-  refreshing: boolean,
+  onScrollViewRef: (ref: any) => void;
+  onScroll: (e: any) => void;
+  onEndReached: () => void;
+  scrollEnabled?: boolean;
+  onRefresh?: () => void;
+  refreshing: boolean;
   position?: Animated.Value<number>;
   onIndexChange: (index: number) => void;
   navigationState: NavigationState<T>;
@@ -42,10 +42,10 @@ type Props<T extends Route> = PagerCommonProps & {
       navigationState: NavigationState<T>;
     }
   ) => React.ReactNode;
-  isLoading?: boolean,
-  renderLoaderComponent?: (props: any) => React.ReactNode,
-  isError?: boolean,
-  renderErrorComponent?: (props: any) => React.ReactNode,
+  isLoading?: boolean;
+  renderLoaderComponent?: (props: any) => React.ReactNode;
+  isError?: boolean;
+  renderErrorComponent?: (props: any) => React.ReactNode;
   tabBarPosition: 'top' | 'bottom';
   initialLayout?: { width?: number; height?: number };
   lazy: boolean;
@@ -55,7 +55,7 @@ type Props<T extends Route> = PagerCommonProps & {
   style?: StyleProp<ViewStyle>;
   gestureHandlerProps: React.ComponentProps<typeof PanGestureHandler>;
   renderPager: (props: ChildProps<T>) => React.ReactNode;
-  renderTopContent?: (props: any) => React.ReactNode,
+  renderTopContent?: (props: any) => React.ReactNode;
 };
 
 type State = {
@@ -150,154 +150,199 @@ export default class TabView<T extends Route> extends React.Component<
 
     return (
       <View onLayout={this.handleLayout} style={[styles.pager, style]}>
-        {renderPager({
-          navigationState,
-          layout,
-          keyboardDismissMode,
-          swipeEnabled,
-          swipeVelocityImpact,
-          timingConfig,
-          springConfig,
-          onSwipeStart,
-          onSwipeEnd,
-          onIndexChange: this.jumpToIndex,
-          springVelocityScale,
-          removeClippedSubviews,
-          gestureHandlerProps,
-          children: ({
-            position,
-            render,
-            addListener,
-            removeListener,
-            jumpTo,
-          }) => {
-            // All of the props here must not change between re-renders
-            // This is crucial to optimizing the routes with PureComponent
-            const sceneRendererProps = {
-              position,
-              layout,
-              jumpTo,
-            };
+        {renderTopContent ? (
+          <ScrollView
+            ref={ref => {
+              if (onScrollViewRef) {
+                onScrollViewRef(ref);
+              }
+            }}
+            scrollEnabled={scrollEnabled}
+            stickyHeaderIndices={[1]}
+            collapsable={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={
+              ((isLoading && renderLoaderComponent) ||
+                (isError && renderErrorComponent)) && { flex: 1 }
+            }
+            onScroll={e => {
+              if (onScroll) {
+                onScroll(e);
+              }
 
-            return renderTopContent ? (
-              <ScrollView
-                ref={ref => {
-                  if (onScrollViewRef) {
-                    onScrollViewRef(ref)
-                  }
-                }}
-                scrollEnabled={scrollEnabled}
-                stickyHeaderIndices={[1]} 
-                collapsable={false}
-                refreshControl={
-                  <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              let paddingToBottom = 10;
+              paddingToBottom += e.nativeEvent.layoutMeasurement.height;
+              if (
+                e.nativeEvent.contentOffset.y >=
+                e.nativeEvent.contentSize.height - paddingToBottom
+              ) {
+                if (onEndReached) {
+                  onEndReached();
                 }
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={((isLoading && renderLoaderComponent) || (isError && renderErrorComponent)) && { flex: 1 }}
-                onScroll={(e) => {
-                  if (onScroll) {
-                    onScroll(e);
-                  }
-        
-                  let paddingToBottom = 10;
-                  paddingToBottom += e.nativeEvent.layoutMeasurement.height;
-                  if(e.nativeEvent.contentOffset.y >= e.nativeEvent.contentSize.height - paddingToBottom) {
-                    if (onEndReached) {
-                      onEndReached();
-                    }
-                  }
-                }}
-                scrollEventThrottle={400}
-              >
-                {positionListener ? (
-                  <Animated.Code
-                    exec={Animated.set(positionListener, position)}
-                  />
-                ) : null}
-                {tabBarPosition === 'top' &&
-                  renderTabBar({
-                    ...sceneRendererProps,
-                    navigationState,
-                  })}
-                {render(
-                  navigationState.routes.map((route, i) => {
-                    return (
-                      <SceneView
-                        {...sceneRendererProps}
-                        addListener={addListener}
-                        removeListener={removeListener}
-                        key={route.key}
-                        index={i}
-                        lazy={lazy}
-                        lazyPreloadDistance={lazyPreloadDistance}
-                        navigationState={navigationState}
-                        style={sceneContainerStyle}
-                      >
-                        {({ loading }) =>
-                          loading
-                            ? renderLazyPlaceholder({ route })
-                            : renderScene({
-                                ...sceneRendererProps,
-                                route,
-                              })
-                        }
-                      </SceneView>
-                    );
-                  })
-                )}
-                {tabBarPosition === 'bottom' &&
-                  renderTabBar({
-                    ...sceneRendererProps,
-                    navigationState,
-                  })}
-                  </ScrollView>
-            ) : (
-              <>
-              {positionListener ? (
-                <Animated.Code
-                  exec={Animated.set(positionListener, position)}
-                />
-              ) : null}
-              {tabBarPosition === 'top' &&
-                renderTabBar({
-                  ...sceneRendererProps,
-                  navigationState,
-                })}
-              {render(
-                navigationState.routes.map((route, i) => {
-                  return (
-                    <SceneView
-                      {...sceneRendererProps}
-                      addListener={addListener}
-                      removeListener={removeListener}
-                      key={route.key}
-                      index={i}
-                      lazy={lazy}
-                      lazyPreloadDistance={lazyPreloadDistance}
-                      navigationState={navigationState}
-                      style={sceneContainerStyle}
-                    >
-                      {({ loading }) =>
-                        loading
-                          ? renderLazyPlaceholder({ route })
-                          : renderScene({
-                              ...sceneRendererProps,
-                              route,
-                            })
-                      }
-                    </SceneView>
-                  );
-                })
-              )}
-              {tabBarPosition === 'bottom' &&
-                renderTabBar({
-                  ...sceneRendererProps,
-                  navigationState,
-                })}
-            </>
-            );
-          },
-        })}
+              }
+            }}
+            scrollEventThrottle={400}
+          >
+            {renderPager({
+              navigationState,
+              layout,
+              keyboardDismissMode,
+              swipeEnabled,
+              swipeVelocityImpact,
+              timingConfig,
+              springConfig,
+              onSwipeStart,
+              onSwipeEnd,
+              onIndexChange: this.jumpToIndex,
+              springVelocityScale,
+              removeClippedSubviews,
+              gestureHandlerProps,
+              children: ({
+                position,
+                render,
+                addListener,
+                removeListener,
+                jumpTo,
+              }) => {
+                // All of the props here must not change between re-renders
+                // This is crucial to optimizing the routes with PureComponent
+                const sceneRendererProps = {
+                  position,
+                  layout,
+                  jumpTo,
+                };
+
+                return (
+                  <>
+                    {positionListener ? (
+                      <Animated.Code
+                        exec={Animated.set(positionListener, position)}
+                      />
+                    ) : null}
+                    {tabBarPosition === 'top' &&
+                      renderTabBar({
+                        ...sceneRendererProps,
+                        navigationState,
+                      })}
+                    {render(
+                      navigationState.routes.map((route, i) => {
+                        return (
+                          <SceneView
+                            {...sceneRendererProps}
+                            addListener={addListener}
+                            removeListener={removeListener}
+                            key={route.key}
+                            index={i}
+                            lazy={lazy}
+                            lazyPreloadDistance={lazyPreloadDistance}
+                            navigationState={navigationState}
+                            style={sceneContainerStyle}
+                          >
+                            {({ loading }) =>
+                              loading
+                                ? renderLazyPlaceholder({ route })
+                                : renderScene({
+                                    ...sceneRendererProps,
+                                    route,
+                                  })
+                            }
+                          </SceneView>
+                        );
+                      })
+                    )}
+                    {tabBarPosition === 'bottom' &&
+                      renderTabBar({
+                        ...sceneRendererProps,
+                        navigationState,
+                      })}
+                  </>
+                );
+              },
+            })}
+          </ScrollView>
+        ) : (
+          <>
+            {renderPager({
+              navigationState,
+              layout,
+              keyboardDismissMode,
+              swipeEnabled,
+              swipeVelocityImpact,
+              timingConfig,
+              springConfig,
+              onSwipeStart,
+              onSwipeEnd,
+              onIndexChange: this.jumpToIndex,
+              springVelocityScale,
+              removeClippedSubviews,
+              gestureHandlerProps,
+              children: ({
+                position,
+                render,
+                addListener,
+                removeListener,
+                jumpTo,
+              }) => {
+                // All of the props here must not change between re-renders
+                // This is crucial to optimizing the routes with PureComponent
+                const sceneRendererProps = {
+                  position,
+                  layout,
+                  jumpTo,
+                };
+
+                return (
+                  <>
+                    {positionListener ? (
+                      <Animated.Code
+                        exec={Animated.set(positionListener, position)}
+                      />
+                    ) : null}
+                    {tabBarPosition === 'top' &&
+                      renderTabBar({
+                        ...sceneRendererProps,
+                        navigationState,
+                      })}
+                    {render(
+                      navigationState.routes.map((route, i) => {
+                        return (
+                          <SceneView
+                            {...sceneRendererProps}
+                            addListener={addListener}
+                            removeListener={removeListener}
+                            key={route.key}
+                            index={i}
+                            lazy={lazy}
+                            lazyPreloadDistance={lazyPreloadDistance}
+                            navigationState={navigationState}
+                            style={sceneContainerStyle}
+                          >
+                            {({ loading }) =>
+                              loading
+                                ? renderLazyPlaceholder({ route })
+                                : renderScene({
+                                    ...sceneRendererProps,
+                                    route,
+                                  })
+                            }
+                          </SceneView>
+                        );
+                      })
+                    )}
+                    {tabBarPosition === 'bottom' &&
+                      renderTabBar({
+                        ...sceneRendererProps,
+                        navigationState,
+                      })}
+                  </>
+                );
+              },
+            })}
+          </>
+        )}
       </View>
     );
   }
